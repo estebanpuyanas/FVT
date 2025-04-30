@@ -3,10 +3,11 @@
 #include <unordered_map>
 #include <fstream>
 #include <filesystem>
-#include "commands.h"
-#include "commit.h"
-#include "repository.h"
-#include "version_control_feature.h"
+
+#include "../include/fvt/version_control_feature.h" 
+#include "../include/fvt/commit.h"
+#include "../include/fvt/repository.h"
+#include "../include/fvt/commands.h"
 
 /*
  * @brief Function that accepts a base class pointer and calls the overridden function.

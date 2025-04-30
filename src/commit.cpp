@@ -1,10 +1,11 @@
-#include "commit.h"
 #include <algorithm>
 #include <ctime>
 #include <iomanip>
 #include <sstream>
 #include <fstream>
 #include <cstring>
+
+#include "../include/fvt/commit.h"
 
 const std::string CHANGELOG_GENERATION_ERROR = "Error generating CHANGELOG.txt file."; 
 

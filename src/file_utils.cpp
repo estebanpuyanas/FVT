@@ -1,5 +1,6 @@
-#include "file_utils.h"
 #include <cstring>
+
+#include "../include/fvt/file_utils.h"
 
 /**
  * @brief Returns a pointer to the file extension within a given file path.

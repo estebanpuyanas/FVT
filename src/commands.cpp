@@ -1,10 +1,11 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
-#include "commands.h"
-#include "repository.h"
-#include "repository_manager.h"
-#include "invalid_command_exception.h"
+
+#include "../include/fvt/commands.h"
+#include "../include/fvt/repository.h"
+#include "../include/fvt/repository_manager.h"
+#include "../include/fvt/invalid_command_exception.h"
 
 int command_usage_stats[static_cast<int>(command_stats_type::count)] = {0};
 

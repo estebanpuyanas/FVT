@@ -30,7 +30,7 @@ LDFLAGS_EXTRA_PRF:=-pg
 ## the following should not need to change
 
 ## generic options
-CXXFLAGS_BASE:=$(CXXFLAGS_BASE) -std=c++20 -Wall -Werror -pedantic-errors -Iinclude -Isrc
+CXXFLAGS_BASE:=$(CXXFLAGS_BASE) -std=c++20 -Wall -Werror -pedantic-errors -Iinclude/fvt -Isrc
 LDFLAGS_BASE:=$(LDFLAGS_BASE) -std=c++20
 
 ## platform-specific options
