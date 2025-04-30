@@ -1,4 +1,4 @@
-# CS3520 Class Proect: Version Control System #
+# CS3520 Class Proect: File Versioning Tracker #
 
 For our Programming in `C++` class proect we decided to build a simplified of a Version Control System (VCS). Inspired from famous VCSs like [Git](https://git.kernel.org/pub/scm/git/git.git) and [RCS](https://www.gnu.org/software/rcs/). Our VCS works entierly through the command line interface (CLI) and is 100% written in `C++`!
 
