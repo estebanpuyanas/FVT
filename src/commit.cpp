@@ -4,17 +4,26 @@
 #include <sstream>
 #include <fstream>
 #include <cstring>
+#include <cstdint>
 
 #include "../include/fvt/commit.h"
 
-const std::string CHANGELOG_GENERATION_ERROR = "Error generating CHANGELOG.txt file."; 
+const std::string CHANGELOG_GENERATION_ERROR = "Error generating CHANGELOG.txt file.";
 
 // Constructor definition
-commit::commit(unsigned int id, const std::vector<std::string>& files, const std::string& message) 
-    : version_control_feature("Commit " + std::to_string(id)), 
-    commit_id(id), changed_files(files), commit_message(message) 
-{  
-    timestamp = create_timestamp(); 
+commit::commit(const std::vector<std::string>& files, const std::string& message)
+    : version_control_feature("Commit"),
+      changed_files(files), commit_message(message)
+{
+    timestamp = create_timestamp();
+
+    std::string data = timestamp + commit_message;
+    for (const auto& f : changed_files)
+    {
+        data += f;
+    }
+    commit_id = generate_hash(data);
+    name = "Commit " + commit_id;
 }
 
 // Copy constructor
@@ -29,19 +38,35 @@ commit::commit(const commit& other)
 commit::~commit() {}
 
 // Getter method definitions
-unsigned int commit::get_commit_id() const { return commit_id; }
+std::string commit::get_commit_id() const { return commit_id; }
 std::vector<std::string> commit::get_changed_files() const { return changed_files; }
 std::string commit::get_timestamp() const { return timestamp; }
 std::string commit::get_commit_message() const { return commit_message; }
 
 // Helper function to generate a timestamp
-std::string commit::create_timestamp() 
+std::string commit::create_timestamp()
 {
-    std::time_t current_time = std::time(nullptr); 
+    std::time_t current_time = std::time(nullptr);
     std::tm* local_time = std::localtime(&current_time);
     std::ostringstream oss;
-    oss << std::put_time(local_time, "%Y-%m-%d %H:%M:%S");  
-    return oss.str(); 
+    oss << std::put_time(local_time, "%Y-%m-%d %H:%M:%S");
+    return oss.str();
+}
+
+std::string commit::generate_hash(const std::string& data)
+{
+    const uint64_t FNV_OFFSET_BASIS = 14695981039346656037ULL;
+    const uint64_t FNV_PRIME = 1099511628211ULL;
+    uint64_t hash = FNV_OFFSET_BASIS;
+    for(char c : data)
+    {
+        hash ^= static_cast<uint64_t>(c);
+        hash *= FNV_PRIME;
+    }
+
+    std::ostringstream oss;
+    oss << std::hex << hash;
+    return oss.str();
 }
 
 /**
@@ -49,12 +74,12 @@ std::string commit::create_timestamp()
  */
  bool operator==(const commit& commit_1, const commit& commit_2)
  {
-     std::vector<std::string> c1_files = commit_1.get_changed_files();
-     std::vector<std::string> c2_files = commit_2.get_changed_files();
+    std::vector<std::string> c1_files = commit_1.get_changed_files();
+    std::vector<std::string> c2_files = commit_2.get_changed_files();
      
      // Sort files since order does not matter (to avoid edge case where c1 == c2 but shown as false negative due to difference in file order)
-     std::sort(c1_files.begin(), c1_files.end());
-     std::sort(c1_files.begin(), c1_files.end());
+    std::sort(c1_files.begin(), c1_files.end());
+    std::sort(c2_files.begin(), c2_files.end());
  
      return (commit_1.get_commit_id() == commit_2.get_commit_id() &&
      commit_1.get_timestamp() == commit_2.get_timestamp() &&
@@ -81,7 +106,7 @@ std::string commit::create_timestamp()
 
     // Write commit ID
     strncpy(buffer, "Commit ID: ", sizeof(buffer));
-    strncat(buffer, std::to_string(commit_id).c_str(), sizeof(buffer) - strlen(buffer) - 1);
+    strncat(buffer, commit_id.c_str(), sizeof(buffer) - strlen(buffer) - 1);
     strncat(buffer, "\n", sizeof(buffer) - strlen(buffer) - 1);
 
     // Write timestamp

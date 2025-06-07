@@ -232,21 +232,16 @@ void handle_checkout(const std::string &argument) {
         return;
     }
 
-    // Determine if the argument is a branch name or a commit ID
-    if (std::isdigit(argument[0])) {
-        // Argument is a commit ID
-        unsigned int commit_id = std::stoi(argument);
-        for (const auto& c : repo->get_commit_history()) {
-            if (c.get_commit_id() == commit_id) {
-                repo->checkout_commit(std::to_string(commit_id));
-                return;
-            }
+    // Determine if the argument matches a commit ID
+    for (const auto& c : repo->get_commit_history()) {
+        if (c.get_commit_id() == argument) {
+            repo->checkout_commit(argument);
+            return;
         }
-        std::cerr << "Error: Commit ID '" << commit_id << "' not found.\n";
-    } else {
-        // Argument is a branch name
-        repo->checkout_branch(argument);
     }
+
+    // Otherwise treat the argument as a branch name
+    repo->checkout_branch(argument);
 }
 
 /**

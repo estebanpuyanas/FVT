@@ -22,7 +22,7 @@ struct commit : public version_control_feature
 
 // Make these private as they are not meant to be accessible or changed by other components of the code/users.
 private:
-    unsigned int commit_id;
+    std::string commit_id;
     std::string timestamp;
     std::vector<std::string> changed_files;
     std::string commit_message;
@@ -33,7 +33,7 @@ public:
      * @param id The unique ID of the commit.
      * @param files The list of files changed in this commit.
      */
-    commit(unsigned int id, const std::vector<std::string>& files, const std::string& message); 
+    commit(const std::vector<std::string>& files, const std::string& message);
 
     /**
      * @brief Copies a commit.
@@ -50,7 +50,7 @@ public:
      * @brief Gets the commit ID.
      * @return The unique commit ID.
      */
-    unsigned int get_commit_id() const;
+    std::string get_commit_id() const;
 
     /**
      * @brief Gets the list of changed files.
@@ -105,7 +105,8 @@ public:
 
 private:
     // Helper function to generate a timestamp
-    std::string create_timestamp(); 
+    std::string create_timestamp();
+    static std::string generate_hash(const std::string& data);
 };
 
 #endif

@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include "version_control_feature.h"
+#include "commit.h"
 
 /**
  * @brief Represents a branch in the repository.
@@ -13,7 +14,7 @@ class branch : public version_control_feature
 private:
     std::string branch_name;
     // The commit ID this branch is pointing to
-    unsigned int commit_id; 
+    std::string commit_id;
     // Branch needs to point to the commit ID it was created from but also have own unique ID.
     unsigned int branch_id; 
     commit* latest_commit;
@@ -26,8 +27,8 @@ public:
      * @param branch_id The unique ID of the branch.
      * @param latest_commit The latest commit object.
      */
-    branch(const std::string& name, unsigned int commit_id, unsigned int branch_id, commit* latest_commit)
-        : version_control_feature(name), // Call base class constructor 
+    branch(const std::string& name, const std::string& commit_id, unsigned int branch_id, commit* latest_commit)
+        : version_control_feature(name), // Call base class constructor
         branch_name(name), commit_id(commit_id),
         branch_id(branch_id), latest_commit(latest_commit) {}
 
@@ -54,7 +55,7 @@ public:
      * @brief Gets the commit ID of the latest commit on the branch.
      * @return The commit ID.
      */
-    unsigned int get_commit_id() const {
+    std::string get_commit_id() const {
         return commit_id;
     }
 
