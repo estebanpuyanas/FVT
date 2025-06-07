@@ -56,7 +56,7 @@ void repository::show_commit_log()
 
         // Write commit ID
         strncpy(buffer, "Commit ID: ", sizeof(buffer));
-        strncat(buffer, std::to_string(c.get_commit_id()).c_str(), sizeof(buffer) - strlen(buffer) - 1);
+        strncat(buffer, c.get_commit_id().c_str(), sizeof(buffer) - strlen(buffer) - 1);
         strncat(buffer, "\n", sizeof(buffer) - strlen(buffer) - 1);
 
         // Write timestamp
@@ -93,7 +93,6 @@ void repository::create_branch(const std::string &branch_name)
     branches.emplace_back(branch(branch_name, latest_commit->get_commit_id(), branch_id, latest_commit));
 
     std::cout << "Created new branch: " << branch_name << " pointing to commit " << latest_commit->get_commit_id() << std::endl;
-    unsigned int latest_commit_id = commit_history.back().get_commit_id();
 }
 
 void repository::get_branches()
@@ -127,7 +126,7 @@ void repository::checkout_commit(const std::string &commit_id)
 {
     for (const auto &c : commit_history)
     {
-        if (std::to_string(c.get_commit_id()) == commit_id)
+        if (c.get_commit_id() == commit_id)
         {
             std::cout << "Switched to commit: " << commit_id << std::endl;
             return;
