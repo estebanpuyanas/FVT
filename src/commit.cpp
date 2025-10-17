@@ -5,23 +5,75 @@
 #include <chrono>
 #include <sstream>
 #include <iomanip>
-#include <openssl/sha.h> 
+#include <openssl/evp.h> 
 #include <zlib.h>
+#include <set>
 
 namespace fvt {
 
-    // Helper function to generate a SHA-256 hash for the commit
-    std::string generate_commit_hash(const std::string& data) {
-        unsigned char hash[SHA256_DIGEST_LENGTH];
-        SHA256(reinterpret_cast<const unsigned char*>(data.c_str()), data.size(), hash);
+    /**
+     * Generates a SHA-256 hash for a file.
+     * 
+     * @param path The path to the file to hash.
+     * 
+     */
+    std::string hash_file(const std::filesystem::path& path) {
+        std::ifstream file(path, std::ios::binary); 
+
+        if (!file) {
+            return "";
+        }
+
+        EVP_MD_CTX* ctx = EVP_MD_CTX_new(); 
+        EVP_DigestInit_ex(ctx, EVP_sha256(), nullptr);
+
+        char buffer[4096];
+
+        while (file.read(buffer, sizeof(buffer)) || file.gcount()) {
+            EVP_DigestUpdate(ctx, buffer, file.gcount());
+        }
+
+        unsigned char hash[EVP_MAX_MD_SIZE];
+        unsigned int hash_length = 0;
+        EVP_DigestFinal_ex(ctx, hash, &hash_length);
+        EVP_MD_CTX_free(ctx);
 
         std::ostringstream hash_stream;
-        for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+        for (unsigned int i = 0; i < hash_length; ++i) {
             hash_stream << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
         }
         return hash_stream.str();
     }
 
+    /**
+     * Generates a unique commit hash based on commit data.
+     * 
+     * @param data The data to hash for the commit.
+     */
+    std::string generate_commit_hash(const std::string& data) {
+        EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+        EVP_DigestInit_ex(ctx, EVP_sha256(), nullptr);
+        EVP_DigestUpdate(ctx, data.c_str(), data.size());
+
+        unsigned char hash[EVP_MAX_MD_SIZE];
+        unsigned int hash_length;
+        EVP_DigestFinal_ex(ctx, hash, &hash_length);
+        EVP_MD_CTX_free(ctx);
+
+        std::ostringstream hash_stream;
+        for (unsigned int i = 0; i < hash_length; ++i) {
+            hash_stream << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
+        }
+        return hash_stream.str();
+    }
+
+    /**
+     * Compresses a file using zlib and writes to destination.
+     * 
+     * @param source The source file path.
+     * @param destination The destination file path.
+     * @return True if compression was successful, false otherwise.
+     */
     bool compress_files(const std::filesystem::path& source, const std::filesystem::path& destination) {
 
         std::ifstream input(source, std::ios::binary);
@@ -83,15 +135,65 @@ namespace fvt {
 
         deflateEnd(&zs);
         return true;
-
     }
 
+    std::set<std::string> get_repo_files() {
+        std::set<std::string> files;
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(".")) {
+            if (entry.is_regular_file()) {
+                std::string path = entry.path().string();
+
+                if (path.find(".fvt") == std::string::npos) {
+                    files.insert(path.substr(2));
+                }
+            }
+        }
+
+        return files;
+    }
+
+    /**
+     * Creates a new commit in the repository with the specified message and files.
+     * 
+     * @param message The commit message.
+     * @param files The list of files to include in the commit.
+     * @return True if the commit was successful, false otherwise.
+     */
     bool commit(const std::string& message, const std::vector<std::string>& files) {
         // Check if the repository is valid
         if (!std::filesystem::exists(".fvt")) {
             std::cerr << "Error: No repository found. Please run 'fvt init' first." << std::endl;
             return false;
         }
+
+        std::set<std::string> files_to_commit;
+        if (files.empty()) {
+            files_to_commit = get_repo_files();
+        } else {
+            for (const auto& file : files) {
+                files_to_commit.insert(file);
+            }
+        }
+
+        // Read previous index if it exists:
+        std::set<std::string> prev_index;
+        std::ifstream index_in(".fvt/index");
+        std::string line;
+        while (std::getline(index_in, line)) {
+            prev_index.insert(line);
+        }
+        index_in.close();
+
+        // Detect deleted files
+        std::set<std::string> deleted_files;
+        for (const auto& f : prev_index) {
+            if (!std::filesystem::exists(f)) deleted_files.insert(f);
+        }
+
+        // Write new index
+        std::ofstream idx_out(".fvt/index");
+        for (const auto& f : files_to_commit) idx_out << f << "\n";
+        idx_out.close();
 
         // Read the current HEAD to get the parent commit hash
         std::string parent_commit = "null";
@@ -114,6 +216,7 @@ namespace fvt {
         // Create the commit metadata file
         std::filesystem::path commit_folder = ".fvt/commits/" + commit_hash;
         std::filesystem::create_directories(commit_folder);
+
         std::ofstream commit_metadata(commit_folder / "metadata.txt");
         
         if (!commit_metadata) {
@@ -126,23 +229,21 @@ namespace fvt {
         commit_metadata << "Timestamp: " << timestamp << "\n";
         commit_metadata << "Message: " << message << "\n";
         commit_metadata.close();
-
-        for (const auto& file : files) {
+        
+        // Store compressed files in objects and in commit folder
+        for (const auto& file : files_to_commit) {
             std::filesystem::path source(file);
-
-            if (!std::filesystem::exists(source)) {
-                std::cerr << "Error: File " << file << " not found." << std::endl;
-                continue;
+            if (!std::filesystem::exists(source)) continue;
+            std::string file_hash = hash_file(source);
+            std::filesystem::path obj_path = ".fvt/objects/" + file_hash + ".gz";
+            std::filesystem::create_directories(".fvt/objects");
+            
+            if (!std::filesystem::exists(obj_path)) {
+                compress_files(source, obj_path);
             }
-
-
-
-            std::filesystem::path dest_path = commit_folder / (source.filename().string() + ".gz");
-
-            if (!compress_files(source, dest_path)) {
-                std::cerr << "Error: Failed to compress file " << file << std::endl;
-                return false;
-            }
+            // Copy compressed file to commit folder
+            std::filesystem::copy_file(obj_path, commit_folder / (source.filename().string() + ".gz"),
+                                      std::filesystem::copy_options::overwrite_existing);
         }
 
         // Update the HEAD file to point to the new commit

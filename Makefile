@@ -30,7 +30,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 
 # Clean build files
 clean:
-	rm -rf $(BUILD_DIR) $(BIN_DIR)
+	@rm -rf $(BUILD_DIR) $(BIN_DIR)
 
 # Run the program
 run: all
