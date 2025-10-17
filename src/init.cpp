@@ -13,7 +13,7 @@ namespace fvt {
      *                  If not provided, the repository will be created in the current directory.
      * @return True if the repository was successfully created, false otherwise.
      */
-        bool init(const std::string& repo_name, const std::string& repo_path = "") {
+        bool init(const std::string& repo_name, const std::string& repo_path) {
         try {
             std::filesystem::path target_path = repo_path.empty()
             ? std::filesystem::current_path() / repo_name 
