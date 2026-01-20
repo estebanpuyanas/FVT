@@ -4,6 +4,13 @@
 #include <iostream>
 #include <stdexcept>
 
+/**
+* The command registry class is responsible for identifying command hanlders, 
+* which in turn parse and execute the different commands available in FVT.
+* To understand the different flags and arguments a specific command takes,
+* refer to the relevant *.h or *.cpp, or the documentation. 
+*/
+
 namespace fvt {
 
     /**
