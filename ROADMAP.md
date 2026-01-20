@@ -7,3 +7,7 @@
 - [ ] Write the outline of the `help` command (should be pretty simple as its just printing stuff to screen or opening an editor in terminal)
 
 - [ ] fix bug making it possible to create repository without quotes.
+
+- [ ] Refactor [commit](src/commit.cpp) to separate adding and file commiting functionality.
+
+- [ ] Write unit tests.
